@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /tags/{tagId} {
+      // Allow anyone to read tag data (for emergency access)
+      allow read: if true;
+      
+      // Allow creation of new tags with minimal validation
+      allow create: if request.auth == null 
+        && request.resource.data.tagId == tagId
+        && request.resource.data.activated is bool
+        && request.resource.data.createdAt is string;
+      
+      // Allow updates only with proper PIN verification (handled by Cloud Functions)
+      allow update: if false;
+      
+      // No deletes allowed
+      allow delete: if false;
+    }
+  }
+}
