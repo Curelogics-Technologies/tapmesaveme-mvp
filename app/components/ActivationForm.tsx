@@ -33,32 +33,37 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
 
   // Custom country order: USA first, then Philippines, then alphabetical
   const getCustomCountries = () => {
-    const countries = defaultCountries.filter((country) => {
-      const { iso2 } = parseCountry(country)
-      return iso2 !== 'us' && iso2 !== 'ph'
-    })
-    
-    // Sort remaining countries alphabetically by name
-    countries.sort((a, b) => {
-      const countryA = parseCountry(a)
-      const countryB = parseCountry(b)
-      return countryA.name.localeCompare(countryB.name)
-    })
-    
-    // Find US and Philippines
-    const usCountry = defaultCountries.find((country) => {
-      const { iso2 } = parseCountry(country)
-      return iso2 === 'us'
-    })
-    
-    const phCountry = defaultCountries.find((country) => {
-      const { iso2 } = parseCountry(country)
-      return iso2 === 'ph'
-    })
-    
-    // Return with US first, Philippines second, then alphabetical
-    return [usCountry, phCountry, ...countries].filter(Boolean)
-  }
+  const countries = defaultCountries.filter((country) => {
+    const { iso2 } = parseCountry(country)
+    return iso2 !== 'us' && iso2 !== 'ca' && iso2 !== 'ph'
+  })
+  
+  // Sort remaining countries alphabetically by name
+  countries.sort((a, b) => {
+    const countryA = parseCountry(a)
+    const countryB = parseCountry(b)
+    return countryA.name.localeCompare(countryB.name)
+  })
+  
+  // Find US, Canada, and Philippines
+  const usCountry = defaultCountries.find((country) => {
+    const { iso2 } = parseCountry(country)
+    return iso2 === 'us'
+  })
+  
+  const caCountry = defaultCountries.find((country) => {
+    const { iso2 } = parseCountry(country)
+    return iso2 === 'ca'
+  })
+  
+  const phCountry = defaultCountries.find((country) => {
+    const { iso2 } = parseCountry(country)
+    return iso2 === 'ph'
+  })
+  
+  // Return with US first, Canada second, Philippines third, then alphabetical
+  return [usCountry, caCountry, phCountry, ...countries].filter(Boolean)
+}
 
   const addContact = () => {
     setFormData({
