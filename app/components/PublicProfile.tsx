@@ -1,7 +1,8 @@
 "use client"
 
-import { Phone, AlertCircle, Edit3, Eye, Calendar, Shield, User } from "lucide-react"
+import { Phone, AlertCircle, Edit3, Eye, Calendar, Shield, User, Copy, Check } from "lucide-react"
 import Image from "next/image"
+import { useState } from "react"
 
 interface TagData {
   tagId: string
@@ -30,6 +31,8 @@ interface PublicProfileProps {
 }
 
 export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
+  const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>({})
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -48,6 +51,32 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
     })
   }
 
+  const copyToClipboard = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedItems(prev => ({ ...prev, [key]: true }))
+      setTimeout(() => {
+        setCopiedItems(prev => ({ ...prev, [key]: false }))
+      }, 2000)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+    }
+  }
+
+  const CopyButton = ({ text, copyKey, className = "" }: { text: string, copyKey: string, className?: string }) => (
+    <button
+      onClick={() => copyToClipboard(text, copyKey)}
+      className={`ml-2 p-1 rounded-md hover:bg-gray-200 transition-colors ${className}`}
+      title="Copy to clipboard"
+    >
+      {copiedItems[copyKey] ? (
+        <Check className="w-4 h-4 text-green-600" />
+      ) : (
+        <Copy className="w-4 h-4 text-gray-500" />
+      )}
+    </button>
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
       <div className="max-w-xl w-full bg-white shadow-xl rounded-xl p-8 overflow-auto">
@@ -63,9 +92,12 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
           <div className="bg-red-600 text-white p-4 rounded-lg">
             <AlertCircle className="w-8 h-8 mx-auto mb-2" />
             <h2 className="text-3xl font-bold mb-2">Emergency Information</h2>
-            <p className="text-base text-red-100">
-              Tag ID: <span className="font-mono font-semibold">{tagData.tagId}</span>
-            </p>
+            <div className="flex items-center justify-center">
+              <p className="text-base text-red-100">
+                Tag ID: <span className="font-mono font-semibold">{tagData.tagId}</span>
+              </p>
+              <CopyButton text={tagData.tagId} copyKey="tagId" className="hover:bg-red-700" />
+            </div>
             <p className="text-sm text-red-200 mt-2">⚡ This is an active emergency profile</p>
           </div>
         </div>
@@ -77,15 +109,16 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
             Personal Information
           </h2>
           <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-5">
-            <div className="flex">
+            <div className="flex items-center">
               <div className="flex-shrink-0">
                 <User className="h-4 w-4 text-blue-400" />
               </div>
-              <div className="ml-3">
+              <div className="ml-3 flex-1">
                 <p className="text-gray-800 text-sm font-medium">
                   Name: <span className="font-semibold">{tagData.fullName}</span>
                 </p>
               </div>
+              <CopyButton text={tagData.fullName} copyKey="fullName" />
             </div>
           </div>
         </div>
@@ -100,12 +133,22 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
             {tagData.emergencyContacts.map((contact, index) => (
               <div key={index} className="bg-gray-50 rounded-lg p-5 border-l-4 border-red-500">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-gray-900 text-base">{contact.name}</h3>
+                  <div className="flex items-center">
+                    <h3 className="font-semibold text-gray-900 text-base">{contact.name}</h3>
+                    <CopyButton text={contact.name} copyKey={`contact-name-${index}`} />
+                  </div>
                   <span className="text-sm text-gray-500 bg-gray-200 px-2 py-1 rounded">{contact.relationship}</span>
                 </div>
                 <div className="flex items-center text-base text-gray-800">
                   <Phone className="w-4 h-4 mr-2 text-blue-600" />
-                  {contact.phone}
+                  <span className="flex-1">{contact.phone}</span>
+                  <CopyButton text={contact.phone} copyKey={`contact-phone-${index}`} />
+                  <a
+                    href={`tel:${contact.phone}`}
+                    className="ml-2 bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700 transition-colors"
+                  >
+                    Call
+                  </a>
                 </div>
               </div>
             ))}
@@ -124,9 +167,10 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
                 <div className="flex-shrink-0">
                   <AlertCircle className="h-4 w-4 text-yellow-400" />
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <p className="text-gray-800 whitespace-pre-wrap text-sm font-medium">{tagData.medicalNotes}</p>
                 </div>
+                <CopyButton text={tagData.medicalNotes} copyKey="medicalNotes" />
               </div>
             </div>
           </div>
@@ -144,9 +188,10 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
                 <div className="flex-shrink-0">
                   <Shield className="h-4 w-4 text-blue-400" />
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <p className="text-gray-800 whitespace-pre-wrap text-sm font-medium">{tagData.insuranceInfo}</p>
                 </div>
+                <CopyButton text={tagData.insuranceInfo} copyKey="insuranceInfo" />
               </div>
             </div>
           </div>
@@ -164,9 +209,10 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
                 <div className="flex-shrink-0">
                   <AlertCircle className="h-4 w-4 text-gray-400" />
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <p className="text-gray-800 whitespace-pre-wrap text-sm font-medium">{tagData.additionalNotes}</p>
                 </div>
+                <CopyButton text={tagData.additionalNotes} copyKey="additionalNotes" />
               </div>
             </div>
           </div>
