@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import DownloadButtons from "@/components/ui/download-buttons"
 
 export default function HomePage() {
   return (
@@ -13,8 +14,11 @@ export default function HomePage() {
             alt="TapMeSaveMe Logo"
             width={135}
             height={44}
-            className="mx-auto mb-2"
+            className="mx-auto"
           />
+          <div className="w-4/5 mx-auto mb-4">
+            <DownloadButtons />
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">TapMeSaveMe™</h1>
           <p className="text-base text-gray-600 mb-4">Emergency NFC Profile System</p>
 

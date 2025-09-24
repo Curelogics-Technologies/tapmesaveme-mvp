@@ -10,6 +10,7 @@ import { ArrowLeft, Save, Plus, Trash2, Lock } from "lucide-react"
 import Image from "next/image"
 import { PhoneInput, defaultCountries, parseCountry } from 'react-international-phone'
 import 'react-international-phone/style.css'
+import DownloadButtons from "@/components/ui/download-buttons"
 
 interface TagData {
   tagId: string
@@ -62,47 +63,47 @@ export function EditForm({ tagId, tagData, onCancel, onSave }: EditFormProps) {
 
   // Custom country order: USA first, then Philippines, then alphabetical
   const getCustomCountries = () => {
-  const countries = defaultCountries.filter((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 !== 'us' && iso2 !== 'ca' && iso2 !== 'ph'
-  })
-  
-  // Sort remaining countries alphabetically by name
-  countries.sort((a, b) => {
-    const countryA = parseCountry(a)
-    const countryB = parseCountry(b)
-    return countryA.name.localeCompare(countryB.name)
-  })
-  
-  // Find US, Canada, and Philippines
-  const usCountry = defaultCountries.find((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 === 'us'
-  })
-  
-  const caCountry = defaultCountries.find((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 === 'ca'
-  })
-  
-  const phCountry = defaultCountries.find((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 === 'ph'
-  })
-  
-  // Return with US first, Canada second, Philippines third, then alphabetical
-  return [usCountry, caCountry, phCountry, ...countries].filter(Boolean)
-}
+    const countries = defaultCountries.filter((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 !== 'us' && iso2 !== 'ca' && iso2 !== 'ph'
+    })
+
+    // Sort remaining countries alphabetically by name
+    countries.sort((a, b) => {
+      const countryA = parseCountry(a)
+      const countryB = parseCountry(b)
+      return countryA.name.localeCompare(countryB.name)
+    })
+
+    // Find US, Canada, and Philippines
+    const usCountry = defaultCountries.find((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 === 'us'
+    })
+
+    const caCountry = defaultCountries.find((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 === 'ca'
+    })
+
+    const phCountry = defaultCountries.find((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 === 'ph'
+    })
+
+    // Return with US first, Canada second, Philippines third, then alphabetical
+    return [usCountry, caCountry, phCountry, ...countries].filter(Boolean)
+  }
 
   const validatePhoneNumber = (phone: string) => {
     // Remove all non-digit characters except +
     const cleanPhone = phone.replace(/[^\d+]/g, "")
-    
+
     // Check if it starts with + and has country code
     if (!cleanPhone.startsWith('+')) {
       return false
     }
-    
+
     // Check length (should be between 7-15 digits after country code)
     const digitsOnly = cleanPhone.substring(1) // Remove the +
     return digitsOnly.length >= 7 && digitsOnly.length <= 15
@@ -118,7 +119,7 @@ export function EditForm({ tagId, tagData, onCancel, onSave }: EditFormProps) {
       const isValid = await verifyPin(pin, tagData.pinHash)
 
       if (isValid) {
-       // console.log("PIN verification successful")
+        // console.log("PIN verification successful")
         setStep("edit")
         trackEvent("edit_access_granted", { tag_id: tagId })
       } else {
@@ -168,7 +169,7 @@ export function EditForm({ tagId, tagData, onCancel, onSave }: EditFormProps) {
         pinHash: newPinHash,
       })
 
-     // console.log("PIN updated successfully")
+      // console.log("PIN updated successfully")
       setSuccess("PIN updated successfully!")
       trackEvent("pin_changed", { tag_id: tagId })
 
@@ -289,8 +290,11 @@ export function EditForm({ tagId, tagData, onCancel, onSave }: EditFormProps) {
               alt="TapMeSaveMe Logo"
               width={160}
               height={56}
-              className="mx-auto mb-3"
+              className="mx-auto"
             />
+            <div className="mb-5">
+              <DownloadButtons />
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Verify Your Identity</h1>
             <p className="text-base text-gray-600">Enter your 4-digit PIN to edit tag information</p>
             <p className="text-sm text-gray-500 mt-1">
@@ -462,8 +466,11 @@ export function EditForm({ tagId, tagData, onCancel, onSave }: EditFormProps) {
             alt="TapMeSaveMe Logo"
             width={160}
             height={56}
-            className="mx-auto mb-3"
+            className="mx-auto"
           />
+          <div className="mb-6">
+            <DownloadButtons />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Emergency Information</h1>
           <p className="text-base text-gray-600">
             Tag ID: <span className="font-mono font-semibold">{tagId}</span>

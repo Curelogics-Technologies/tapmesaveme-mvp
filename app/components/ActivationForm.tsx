@@ -10,6 +10,7 @@ import { trackEvent } from "../lib/analytics"
 import { Plus, Trash2 } from "lucide-react"
 import { PhoneInput, defaultCountries, parseCountry } from 'react-international-phone'
 import 'react-international-phone/style.css'
+import DownloadButtons from "@/components/ui/download-buttons"
 
 interface ActivationFormProps {
   tagId: string
@@ -26,6 +27,7 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
     medicalNotes: "",
     insuranceInfo: "",
     additionalNotes: "",
+    getUpdatesByEmail: false,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -33,37 +35,37 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
 
   // Custom country order: USA first, then Philippines, then alphabetical
   const getCustomCountries = () => {
-  const countries = defaultCountries.filter((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 !== 'us' && iso2 !== 'ca' && iso2 !== 'ph'
-  })
-  
-  // Sort remaining countries alphabetically by name
-  countries.sort((a, b) => {
-    const countryA = parseCountry(a)
-    const countryB = parseCountry(b)
-    return countryA.name.localeCompare(countryB.name)
-  })
-  
-  // Find US, Canada, and Philippines
-  const usCountry = defaultCountries.find((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 === 'us'
-  })
-  
-  const caCountry = defaultCountries.find((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 === 'ca'
-  })
-  
-  const phCountry = defaultCountries.find((country) => {
-    const { iso2 } = parseCountry(country)
-    return iso2 === 'ph'
-  })
-  
-  // Return with US first, Canada second, Philippines third, then alphabetical
-  return [usCountry, caCountry, phCountry, ...countries].filter(Boolean)
-}
+    const countries = defaultCountries.filter((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 !== 'us' && iso2 !== 'ca' && iso2 !== 'ph'
+    })
+
+    // Sort remaining countries alphabetically by name
+    countries.sort((a, b) => {
+      const countryA = parseCountry(a)
+      const countryB = parseCountry(b)
+      return countryA.name.localeCompare(countryB.name)
+    })
+
+    // Find US, Canada, and Philippines
+    const usCountry = defaultCountries.find((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 === 'us'
+    })
+
+    const caCountry = defaultCountries.find((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 === 'ca'
+    })
+
+    const phCountry = defaultCountries.find((country) => {
+      const { iso2 } = parseCountry(country)
+      return iso2 === 'ph'
+    })
+
+    // Return with US first, Canada second, Philippines third, then alphabetical
+    return [usCountry, caCountry, phCountry, ...countries].filter(Boolean)
+  }
 
   const addContact = () => {
     setFormData({
@@ -90,12 +92,12 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
   const validatePhoneNumber = (phone: string) => {
     // Remove all non-digit characters except +
     const cleanPhone = phone.replace(/[^\d+]/g, "")
-    
+
     // Check if it starts with + and has country code
     if (!cleanPhone.startsWith('+')) {
       return false
     }
-    
+
     // Check length (should be between 7-15 digits after country code)
     const digitsOnly = cleanPhone.substring(1) // Remove the +
     return digitsOnly.length >= 7 && digitsOnly.length <= 15
@@ -317,8 +319,11 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
             alt="TapMeSaveMe Logo"
             width={160}
             height={56}
-            className="mx-auto mb-3"
+            className="mx-auto"
           />
+          <div className="mx-auto mb-6">
+            <DownloadButtons />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Activate Your TapMeSaveMe™ Tag</h1>
           <p className="text-base text-gray-600">
             Tag ID: <span className="font-mono font-semibold">{tagId}</span>
@@ -407,9 +412,18 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
               placeholder="your@email.com"
               disabled={loading}
             />
-            <p className="text-sm text-gray-500 mt-1">
-              We'll send you a welcome email and keep you updated about your tag
-            </p>
+            <label className="flex cursor-pointer mt-1">
+              <input
+                type="checkbox"
+                className="mr-2 h-5 w-5 border-gray-300 rounded mt-1"
+                checked={formData.getUpdatesByEmail}
+                onChange={(e) => setFormData({ ...formData, getUpdatesByEmail: e.target.checked })}
+                disabled={loading}
+              />
+              <a className="text-sm text-gray-500">
+                Yes, I’d like to receive upgrades, safety tips, and special offers from TapMeSaveMe™.
+              </a>
+            </label>
           </div>
 
           <div>
@@ -600,7 +614,6 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
               Include any additional details relevant to emergencies
             </p>
           </div>
-
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none disabled:bg-blue-400 text-base"

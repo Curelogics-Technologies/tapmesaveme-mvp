@@ -1,5 +1,6 @@
 "use client"
 
+import DownloadButtons from "@/components/ui/download-buttons"
 import { Phone, AlertCircle, Edit3, Eye, Calendar, Shield, User, Copy, Check } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
@@ -87,8 +88,11 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
             alt="TapMeSaveMe Logo"
             width={160}
             height={56}
-            className="mx-auto mb-3"
+            className="mx-auto"
           />
+          <div className="pb-6">
+            <DownloadButtons />
+          </div>
           <div className="bg-red-600 text-white p-4 rounded-lg">
             <AlertCircle className="w-8 h-8 mx-auto mb-2" />
             <h2 className="text-3xl font-bold mb-2">Emergency Information</h2>
