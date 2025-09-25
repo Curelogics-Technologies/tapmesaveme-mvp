@@ -79,8 +79,8 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
-      <div className="max-w-xl w-full bg-white shadow-xl rounded-xl p-8 overflow-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center py-4">
+      <div className="max-w-xl w-full bg-[#E2E2E3] shadow-xl rounded-xl p-8 overflow-auto">
         {/* Header with Logo */}
         <div className="text-center mb-6">
           <Image

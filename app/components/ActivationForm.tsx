@@ -157,13 +157,25 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
 
     try {
       setLoading(true)
-      //console.log("Hashing PIN...")
+      console.log("Hashing PIN...")
+
+      // NEW: Count existing devices for this email
+      const existingQuery = query(collection(db!, "tags"), where("ownerEmail", "==", formData.email), where("activated", "==", true))
+      const existingSnapshot = await getDocs(existingQuery)
+      const deviceCount = existingSnapshot.size
+
+      const MAX_DEVICES = 10
+      if (deviceCount >= MAX_DEVICES) {
+        setError(`This email is already associated with ${deviceCount} devices. Please use a different email.`)
+        setLoading(false)
+        return
+      }
 
       const pinHash = await hashPin(formData.pin)
       const now = new Date().toISOString()
 
       // Check if email already exists in Firestore
-      //console.log("Checking if email exists in Firestore:", formData.email)
+      console.log("Checking if email exists in Firestore:", formData.email)
       const q = query(collection(db!, "tags"), where("ownerEmail", "==", formData.email))
       const querySnapshot = await getDocs(q)
       const isEmailRegistered = !querySnapshot.empty
@@ -183,15 +195,16 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
         medicalNotes: formData.medicalNotes,
         insuranceInfo: formData.insuranceInfo,
         additionalNotes: formData.additionalNotes,
+        getUpdatesByEmail: formData.getUpdatesByEmail,
         analytics: {
           tapCount: 0,
           lastTapped: now,
         },
       }
 
-      //console.log("Saving tag data to Firebase...")
+      console.log("Saving tag data to Firebase...")
       await setDoc(doc(db!, "tags", tagId), tagData)
-      //console.log("Tag data saved successfully")
+      console.log("Tag data saved successfully")
 
       setSuccess("Tag activated successfully! Setting up email notifications...")
 
@@ -199,17 +212,17 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
       let emailMessage = ""
 
       try {
-        //console.log("Sending activation email...")
+        console.log("Sending activation email...")
         await fetch("/api/email/activate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: formData.email, name: formData.fullName, tagId }),
         });
-        //console.log("Activation email sent successfully")
+        console.log("Activation email sent successfully")
 
         // If user opted in for updates, call the opt-in API
         if (formData.getUpdatesByEmail) {
-          //console.log("Adding user to opt-in list...")
+          console.log("Adding user to opt-in list...")
           const optInResponse = await fetch("/api/opt-in", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -220,7 +233,7 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
             console.error("Opt-in API error:", await optInResponse.json())
             emailMessage = "Activation email sent, but failed to subscribe to updates."
           } else {
-            //console.log("User added to opt-in list successfully")
+            console.log("User added to opt-in list successfully")
             emailMessage = "Activation email sent and subscribed to updates successfully!"
           }
         } else {
@@ -240,9 +253,10 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
         tag_id: tagId,
         owner_email: formData.email,
         email_success: emailSuccess,
+        device_count: deviceCount + 1,
       })
 
-      //console.log("Tag activation completed successfully")
+      console.log("Tag activation completed successfully")
 
       setTimeout(() => {
         onActivation()
@@ -316,8 +330,8 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center">
-      <div className="max-w-xl w-full bg-white shadow-xl rounded-xl p-8 overflow-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center py-4">
+      <div className="max-w-xl w-full bg-[#E2E2E3] shadow-xl rounded-xl p-8 overflow-auto">
         <div className="text-center mb-6">
           <Image
             src="/logo.png"
