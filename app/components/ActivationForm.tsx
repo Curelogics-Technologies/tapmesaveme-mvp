@@ -207,22 +207,27 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
         });
         //console.log("Activation email sent successfully")
 
-        if (!isEmailRegistered) {
-          //console.log("Sending welcome email for new subscriber...")
-          await fetch("/api/email/welcome", {
+        // If user opted in for updates, call the opt-in API
+        if (formData.getUpdatesByEmail) {
+          //console.log("Adding user to opt-in list...")
+          const optInResponse = await fetch("/api/opt-in", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: formData.email, name: formData.fullName, tagId }),
+            body: JSON.stringify({ email: formData.email }),
           });
-          //console.log("Welcome email sent successfully")
+
+          if (!optInResponse.ok) {
+            console.error("Opt-in API error:", await optInResponse.json())
+            emailMessage = "Activation email sent, but failed to subscribe to updates."
+          } else {
+            //console.log("User added to opt-in list successfully")
+            emailMessage = "Activation email sent and subscribed to updates successfully!"
+          }
         } else {
-          //console.log("Skipping welcome email for existing subscriber")
+          emailMessage = "Activation email sent successfully!"
         }
 
         emailSuccess = true
-        emailMessage = isEmailRegistered
-          ? "Activation email sent successfully!"
-          : "Welcome and activation emails sent successfully!"
       } catch (emailError: any) {
         console.error("Email integration error:", emailError)
         emailSuccess = false
