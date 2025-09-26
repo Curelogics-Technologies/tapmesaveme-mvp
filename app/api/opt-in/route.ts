@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             email_address: email.toLowerCase(),
             status_if_new: "subscribed",
-            tags: ["Opt-in"],
+            tags: ["Opt-in","Activated-sent"],
           }),
         },
       )
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             email_address: email.toLowerCase(),
             status: "subscribed",
-            tags: ["Opt-in"],
+            tags: ["Opt-in","Activated-sent"],
           }),
         },
       )
