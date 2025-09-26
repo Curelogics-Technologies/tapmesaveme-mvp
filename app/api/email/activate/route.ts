@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server"; // Added import
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 // Create reusable transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
@@ -32,6 +33,71 @@ export async function POST(request: NextRequest) {
         { success: false, error: "Name and tag ID are required" },
         { status: 400 }
       );
+    }
+
+    // Mailchimp API details
+    const MAILCHIMP_API_KEY = process.env.MAILCHIMP_API_KEY;
+    const MAILCHIMP_AUDIENCE_ID = process.env.MAILCHIMP_AUDIENCE_ID;
+    const MAILCHIMP_SERVER_PREFIX = process.env.MAILCHIMP_SERVER_PREFIX;
+
+    // Only attempt Mailchimp integration if all env vars are present
+    if (MAILCHIMP_API_KEY && MAILCHIMP_AUDIENCE_ID && MAILCHIMP_SERVER_PREFIX) {
+      // Compute subscriber hash
+      const subscriberHash = crypto.createHash("md5").update(email.toLowerCase()).digest("hex");
+
+      // Check if subscriber exists
+      const checkResponse = await fetch(
+        `https://${MAILCHIMP_SERVER_PREFIX}.api.mailchimp.com/3.0/lists/${MAILCHIMP_AUDIENCE_ID}/members/${subscriberHash}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${MAILCHIMP_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (checkResponse.ok) {
+        // Subscriber exists, add "Activated-sent" tag
+        await fetch(
+          `https://${MAILCHIMP_SERVER_PREFIX}.api.mailchimp.com/3.0/lists/${MAILCHIMP_AUDIENCE_ID}/members/${subscriberHash}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${MAILCHIMP_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email_address: email.toLowerCase(),
+              status_if_new: "subscribed",
+              tags: ["Activated-sent"],
+            }),
+          }
+        );
+      } else if (checkResponse.status === 404) {
+        // Subscriber does not exist, create new subscriber with "Activated-sent" tag
+        await fetch(
+          `https://${MAILCHIMP_SERVER_PREFIX}.api.mailchimp.com/3.0/lists/${MAILCHIMP_AUDIENCE_ID}/members`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${MAILCHIMP_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email_address: email.toLowerCase(),
+              status: "subscribed",
+              tags: ["Activated-sent"],
+            }),
+          }
+        );
+      } else {
+        // Log non-critical error but don't block email sending
+        const error = await checkResponse.json();
+        console.error("Failed to check Mailchimp subscriber:", error);
+      }
+    } else {
+      console.log("Mailchimp opt-in (demo mode):", { email });
     }
 
     // Send activation email
