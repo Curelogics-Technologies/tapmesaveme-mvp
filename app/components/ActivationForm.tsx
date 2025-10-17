@@ -11,6 +11,7 @@ import { Plus, Trash2 } from "lucide-react"
 import { PhoneInput, defaultCountries, parseCountry } from 'react-international-phone'
 import 'react-international-phone/style.css'
 import DownloadButtons from "@/components/ui/download-buttons"
+import { stat } from "fs"
 
 interface ActivationFormProps {
   tagId: string
@@ -183,6 +184,7 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
       const tagData = {
         tagId,
         activated: true,
+        status: "active",
         createdAt: now,
         ownerEmail: formData.email,
         fullName: formData.fullName,
