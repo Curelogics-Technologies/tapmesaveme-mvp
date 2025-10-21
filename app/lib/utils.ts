@@ -15,7 +15,7 @@ async function getBcrypt() {
 
 export async function hashPin(pin: string): Promise<string> {
   const bcryptLib = await getBcrypt()
-  const saltRounds = 10
+  const saltRounds = 12
   return bcryptLib.hash(pin, saltRounds)
 }
 
