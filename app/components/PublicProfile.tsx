@@ -1,9 +1,9 @@
 "use client"
 
 import DownloadButtons from "@/components/ui/download-buttons"
-import { Phone, AlertCircle, Edit3, Eye, Calendar, Shield, User, Copy, Check } from "lucide-react"
+import { Phone, AlertCircle, Edit3, Eye, Calendar, Shield, User, Copy, Check, Users } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface TagData {
   tagId: string
@@ -24,6 +24,12 @@ interface TagData {
     tapCount: number
     lastTapped: string
   }
+  coManagers?: string[]
+  getUpdatesByEmail?: boolean
+  productType?: string
+  status?: string
+  ownerFcmTokens?: string[]
+  coManagerFcmTokens?: string[]
 }
 
 interface PublicProfileProps {
@@ -33,6 +39,7 @@ interface PublicProfileProps {
 
 export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
   const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>({})
+  const [notificationSent, setNotificationSent] = useState(false)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -63,6 +70,64 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
       console.error('Failed to copy text: ', err)
     }
   }
+
+  const sendTapNotifications = async () => {
+    if (notificationSent) return
+
+    try {
+      console.log(`🚨 Tag ${tagData.tagId} tapped! Sending ${tagData.analytics.tapCount}th notification...`)
+
+      const allFcmTokens = [
+        ...(tagData.ownerFcmTokens || []),
+        ...(tagData.coManagerFcmTokens || [])
+      ].filter(Boolean)
+
+      if (allFcmTokens.length === 0) {
+        console.log('ℹ️ No FCM tokens found')
+        setNotificationSent(true)
+        return
+      }
+
+      const expoMessages = allFcmTokens.map(token => ({
+        to: token,
+        sound: 'default',
+        title: '🚨 Emergency Tag Accessed',
+        body: `${tagData.fullName}'s tag ${tagData.tagId} was accessed ${tagData.analytics.tapCount} time(s)!`,
+        data: { 
+          tagId: tagData.tagId, 
+          fullName: tagData.fullName,
+          tapCount: tagData.analytics.tapCount,
+          type: 'emergency_tag_tapped'
+        }
+      }))
+
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(expoMessages),
+      })
+
+      const result = await response.json()
+      console.log('📨 Expo result:', result)
+      
+      setNotificationSent(true)
+      console.log(`✅ Sent ${expoMessages.length} notifications`)
+
+    } catch (error: any) {
+      console.error('❌ Notification error:', error)
+      setNotificationSent(true)
+    }
+  }
+
+  useEffect(() => {
+    if (tagData && tagData.ownerFcmTokens !== undefined) {
+      const timer = setTimeout(sendTapNotifications, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [tagData])
 
   const CopyButton = ({ text, copyKey, className = "" }: { text: string, copyKey: string, className?: string }) => (
     <button
@@ -126,6 +191,28 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
             </div>
           </div>
         </div>
+
+        {tagData.coManagers && tagData.coManagers.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
+              <Users className="w-4 h-4 mr-2 text-red-600" />
+              Co-Managers
+            </h2>
+            <div className="bg-purple-50 border-l-4 border-purple-500 rounded-lg p-5">
+              <div className="space-y-2">
+                {tagData.coManagers.map((email, index) => (
+                  <div key={index} className="flex items-center justify-between bg-white p-3 rounded-md">
+                    <span className="text-sm text-gray-800 font-medium">{email}</span>
+                    <CopyButton text={email} copyKey={`co-manager-${index}`} />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-purple-600 mt-2">
+                These users will receive emergency notifications
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Emergency Contacts */}
         <div className="mb-6">

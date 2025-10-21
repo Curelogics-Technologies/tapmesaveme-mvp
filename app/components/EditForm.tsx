@@ -31,6 +31,12 @@ interface TagData {
     tapCount: number
     lastTapped: string
   }
+  coManagers?: string[]
+  getUpdatesByEmail?: boolean
+  productType?: string
+  status?: string
+  ownerFcmTokens?: string[]
+  coManagerFcmTokens?: string[]
 }
 
 interface EditFormProps {

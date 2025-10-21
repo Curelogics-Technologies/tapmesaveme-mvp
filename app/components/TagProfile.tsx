@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { doc, getDoc, runTransaction } from "firebase/firestore"
+import { doc, getDoc, runTransaction, query, where, getDocs, collection } from "firebase/firestore"
 import { db, isFirebaseAvailable } from "../lib/firebase"
 import { ActivationForm } from "./ActivationForm"
 import { PublicProfile } from "./PublicProfile"
@@ -28,6 +28,12 @@ interface TagData {
     tapCount: number
     lastTapped: string
   }
+  coManagers?: string[]
+  getUpdatesByEmail?: boolean
+  productType?: string
+  status?: string
+  ownerFcmTokens?: string[]
+  coManagerFcmTokens?: string[]
 }
 
 interface TagProfileProps {
@@ -101,8 +107,18 @@ export function TagProfile({ tagId }: TagProfileProps) {
       const docSnap = await getDoc(docRef)
 
       if (docSnap.exists()) {
-        const data = docSnap.data() as TagData
-        setTagData(data)
+        let data = docSnap.data() as TagData
+        
+        console.log(`✅ Tag ${tagId} found:`, data.fullName)
+
+        try {
+          const enrichedData = await enrichWithFcmTokens(data)
+          console.log(`✅ FCM enriched: ${enrichedData.ownerFcmTokens?.length || 0} owner + ${enrichedData.coManagerFcmTokens?.length || 0} co-manager tokens`)
+          setTagData(enrichedData)
+        } catch (fcmError) {
+          console.warn(`⚠️ FCM enrichment failed:`, fcmError)
+          setTagData({ ...data, ownerFcmTokens: [], coManagerFcmTokens: [] })
+        }
 
         if (!skipAnalyticsUpdate) {
           await runTransaction(db!, async (transaction) => {
@@ -124,6 +140,7 @@ export function TagProfile({ tagId }: TagProfileProps) {
           })
         }
       } else {
+        console.log(`❌ Tag ${tagId} NOT found`)
         setTagData(null)
         trackEvent("tag_not_found", {
           tag_id: tagId,
@@ -132,14 +149,62 @@ export function TagProfile({ tagId }: TagProfileProps) {
         })
       }
     } catch (err: any) {
-      console.error(`Error loading tag data for tag: ${tagId}, sessionId: ${sessionIdRef.current}, instanceId: ${instanceIdRef.current}`, err)
+      console.error(`❌ Error loading tag ${tagId}:`, err)
+      setTagData(null)
     } finally {
       setLoading(false)
     }
   }
 
+  const enrichWithFcmTokens = async (tagData: TagData): Promise<TagData> => {
+    const { ownerEmail, coManagers = [] } = tagData
+    
+    console.log(`🔍 Searching FCM tokens for:`, { ownerEmail, coManagers })
+
+    try {
+      const ownerQuery = query(
+        collection(db!, "users"), 
+        where("email", "==", ownerEmail)
+      )
+      const ownerSnap = await getDocs(ownerQuery)
+      const ownerTokens = ownerSnap.docs[0]?.data()?.fcmTokens || []
+      
+      console.log(`✅ Owner ${ownerEmail}:`, ownerTokens)
+
+      let coManagerTokens: string[] = []
+      if (coManagers.length > 0) {
+        const coManagerPromises = coManagers.map(email => 
+          (async () => {
+            const q = query(
+              collection(db!, "users"), 
+              where("email", "==", email)
+            )
+            const snap = await getDocs(q)
+            return snap.docs[0]?.data()?.fcmTokens || []
+          })()
+        )
+        const results = await Promise.all(coManagerPromises)
+        coManagerTokens = results.flat()
+        console.log(`✅ Co-managers [${coManagers.join(', ')}]:`, coManagerTokens)
+      }
+
+      return {
+        ...tagData,
+        ownerFcmTokens: ownerTokens,
+        coManagerFcmTokens: coManagerTokens,
+      }
+      
+    } catch (error) {
+      console.warn(`⚠️ FCM query failed:`, error)
+      return {
+        ...tagData,
+        ownerFcmTokens: [],
+        coManagerFcmTokens: [],
+      }
+    }
+  }
+
   const handleActivation = () => {
-    //console.log(`Tag activated, reloading data for tag: ${tagId}`)
     if (typeof window !== "undefined") {
       sessionStorage.removeItem(`tapCountLock:${tagId}`)
     }
@@ -148,7 +213,6 @@ export function TagProfile({ tagId }: TagProfileProps) {
   }
 
   const handleEdit = () => {
-    //console.log(`Tag edited, reloading data for tag: ${tagId}`)
     setShowEdit(false)
     if (typeof window !== "undefined") {
       sessionStorage.removeItem(`tapCountLock:${tagId}`)
