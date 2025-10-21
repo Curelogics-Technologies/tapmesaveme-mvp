@@ -75,6 +75,16 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
     if (notificationSent) return
 
     try {
+      const now = new Date()
+      const lastTapped = new Date(tagData.analytics.lastTapped)
+      const timeDiff = now.getTime() - lastTapped.getTime()
+      const twoMinutes = 0.5 * 60 * 1000
+
+      if (timeDiff < twoMinutes) {
+        setNotificationSent(true)
+        return
+      }
+
       console.log(`🚨 Tag ${tagData.tagId} tapped! Sending ${tagData.analytics.tapCount}th notification...`)
 
       const allFcmTokens = [
@@ -83,38 +93,33 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
       ].filter(Boolean)
 
       if (allFcmTokens.length === 0) {
-        console.log('ℹ️ No FCM tokens found')
         setNotificationSent(true)
         return
       }
 
-      const expoMessages = allFcmTokens.map(token => ({
-        to: token,
-        sound: 'default',
-        title: '🚨 Emergency Tag Accessed',
-        body: `${tagData.fullName}'s tag ${tagData.tagId} was accessed ${tagData.analytics.tapCount} time(s)!`,
-        data: { 
-          tagId: tagData.tagId, 
-          fullName: tagData.fullName,
-          tapCount: tagData.analytics.tapCount,
-          type: 'emergency_tag_tapped'
-        }
-      }))
-
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      const response = await fetch('/api/send-notifications', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(expoMessages),
+        body: JSON.stringify({
+          tokens: allFcmTokens,
+          tagId: tagData.tagId,
+          fullName: tagData.fullName,
+          tapCount: tagData.analytics.tapCount
+        }),
       })
 
       const result = await response.json()
-      console.log('📨 Expo result:', result)
+      console.log('📨 Server result:', result)
       
-      setNotificationSent(true)
-      console.log(`✅ Sent ${expoMessages.length} notifications`)
+      if (result.success) {
+        setNotificationSent(true)
+      } else {
+        console.warn('⚠️ Notification failed:', result.message)
+        setNotificationSent(true)
+      }
 
     } catch (error: any) {
       console.error('❌ Notification error:', error)
@@ -123,11 +128,11 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
   }
 
   useEffect(() => {
-    if (tagData && tagData.ownerFcmTokens !== undefined) {
+    if (tagData && tagData.ownerFcmTokens !== undefined && !notificationSent) {
       const timer = setTimeout(sendTapNotifications, 1000)
       return () => clearTimeout(timer)
     }
-  }, [tagData])
+  }, [tagData, notificationSent])
 
   const CopyButton = ({ text, copyKey, className = "" }: { text: string, copyKey: string, className?: string }) => (
     <button
