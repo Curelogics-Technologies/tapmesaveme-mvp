@@ -161,7 +161,7 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
       console.log("Hashing PIN...")
 
       // NEW: Count existing devices for this email
-      const existingQuery = query(collection(db!, "tags"), where("ownerEmail", "==", formData.email), where("activated", "==", true))
+      const existingQuery = query(collection(db!, "tags"), where("ownerEmail", "==", formData.email.toLowerCase()), where("activated", "==", true))
       const existingSnapshot = await getDocs(existingQuery)
       const deviceCount = existingSnapshot.size
 
@@ -177,7 +177,7 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
 
       // Check if email already exists in Firestore
       console.log("Checking if email exists in Firestore:", formData.email)
-      const q = query(collection(db!, "tags"), where("ownerEmail", "==", formData.email))
+      const q = query(collection(db!, "tags"), where("ownerEmail", "==", formData.email.toLowerCase()))
       const querySnapshot = await getDocs(q)
       const isEmailRegistered = !querySnapshot.empty
 
@@ -186,7 +186,7 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
         activated: true,
         status: "active",
         createdAt: now,
-        ownerEmail: formData.email,
+        ownerEmail: formData.email.toLowerCase(),  // ✅ FIXED: Convert to lowercase before storing
         fullName: formData.fullName,
         pinHash,
         emergencyContacts: formData.emergencyContacts.map(contact => ({
@@ -442,7 +442,7 @@ export function ActivationForm({ tagId, onActivation }: ActivationFormProps) {
                 disabled={loading}
               />
               <a className="text-sm text-gray-500">
-                Yes, I’d like to receive upgrades, safety tips, and special offers from TapMeSaveMe™.
+                Yes, I'd like to receive upgrades, safety tips, and special offers from TapMeSaveMe™.
               </a>
             </label>
           </div>

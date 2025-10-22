@@ -151,7 +151,7 @@ Contact Support: support@tapmesaveme.com
           <!-- Footer -->
           <div style="background-color: #1e293b; padding: 20px; display: flex; justify-content: flex-start; align-items: center;">
             <div style="width: 100px; height: 100px; border-radius: 8px; background-color: #ffffff; margin-right: 20px; margin-left: 30px;">
-              <img src="https://www.tapmesaveme.com/Logo.png?height=70&width=80" alt="TapMeSaveMe Logo" style="max-width: 100px; height: auto; display: block; margin: 0px; border-radius: 10px;" />
+              <img src="https://activate.tapmesaveme.com/logo.png?height=70&width=80" alt="TapMeSaveMe Logo" style="max-width: 100px; height: auto; display: block; margin: 0px; border-radius: 10px;" />
             </div>
             <div style="margin-left: 40px; color: #d1d5db; margin-top: 5px;">
               <p style="margin: 0 0 10px;">TapMeSaveMe™ | Your Safety, Our Priority</p>
