@@ -3,7 +3,7 @@ import { Expo } from 'expo-server-sdk';
 
 export async function POST(request: NextRequest) {
   try {
-    const { tokens, tagId, fullName, tapCount } = await request.json();
+    const { tokens, tagId, fullName, tapCount, tagName } = await request.json();
 
     if (!tokens || tokens.length === 0) {
       return NextResponse.json({ success: false, message: 'No tokens provided' });
@@ -16,11 +16,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'No valid tokens' });
     }
 
+    const displayTag = tagName && tagName.trim() ? tagName.trim() : tagId;
+
     const messages = validTokens.map((token: string) => ({
       to: token,
       sound: 'default',
       title: '🚨 Emergency Tag Accessed',
-      body: `${fullName}'s tag ${tagId} is been accessed now!`,
+      body: `${displayTag} has just been accessed.`,
       data: { 
         tagId, 
         fullName,

@@ -28,6 +28,7 @@ interface TagData {
   getUpdatesByEmail?: boolean
   productType?: string
   status?: string
+  tagName?: string
   ownerFcmTokens?: string[]
   coManagerFcmTokens?: string[]
 }
@@ -85,8 +86,6 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
         return
       }
 
-      console.log(`🚨 Tag ${tagData.tagId} tapped! Sending ${tagData.analytics.tapCount}th notification...`)
-
       const allFcmTokens = [
         ...(tagData.ownerFcmTokens || []),
         ...(tagData.coManagerFcmTokens || [])
@@ -107,7 +106,8 @@ export function PublicProfile({ tagData, onEdit }: PublicProfileProps) {
           tokens: allFcmTokens,
           tagId: tagData.tagId,
           fullName: tagData.fullName,
-          tapCount: tagData.analytics.tapCount
+          tapCount: tagData.analytics.tapCount,
+          tagName: tagData?.tagName || "",
         }),
       })
 

@@ -32,6 +32,7 @@ interface TagData {
   getUpdatesByEmail?: boolean
   productType?: string
   status?: string
+  tagName?: string
   ownerFcmTokens?: string[]
   coManagerFcmTokens?: string[]
 }
