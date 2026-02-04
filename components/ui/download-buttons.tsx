@@ -9,7 +9,7 @@ export default function DownloadButtons() {
       <p className='text-sm mb-3 text-center text-gray-600'>Get the <b>TapMeSaveMe™</b> app for updates, lost-tag protection, and a two-month free trial of our <b>GPS + SMS</b> premium features.</p>
       <div className="flex flex-col md:flex-row items-center gap-3">
         {/* Google Play */}
-        <Link href="https://play.google.com/store" target="_blank" className='w-full'>
+        <Link href="https://play.google.com/store/apps/details?id=com.tapmesaveme.app&pli=1" target="_blank" className='w-full'>
           <Button
             variant="outline"
             className="flex items-center gap-2 rounded-lg h-12 border-gray-400 bg-black text-white hover:bg-gray-100 hover:text-black w-full"
