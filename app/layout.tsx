@@ -5,7 +5,11 @@ import "./globals.css"
 import { GoogleAnalytics } from "./components/GoogleAnalytics"
 import { Suspense } from "react"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial"]
+})
 
 export const metadata: Metadata = {
   title: "TapMeSaveMe™ - Emergency NFC Profile System",
